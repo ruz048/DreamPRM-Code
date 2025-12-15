@@ -1,0 +1,11 @@
+python -m lcb_runner.runner.main \
+    --model Qwen/Qwen3-Coder-30B-A3B-Instruct \
+    --scenario codegeneration \
+    --evaluate \
+    --release_version release_v6 \
+    --tensor_parallel_size 2 \
+    --end_date 2024-08-01 \
+    --codegen_n 1 \
+    --n 1 \
+    --temperature 0.2 \
+    --cof v1 \
