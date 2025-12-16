@@ -36,8 +36,16 @@ Key mechanics:
       '''
       # implementation
   ```
-- **Meta-learning label correction** treats noisy per-function labels as learnable variables, updates them with a bi-level optimizer (Betty), and anchors the process with clean unit-test rewards, yielding more faithful intermediate supervision.
-  <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="50%">
+- <table>
+    <tr>
+      <td width="60%">
+        <strong>Meta-learning label correction</strong> treats noisy per-function labels as learnable variables, updates them with a bi-level optimizer (Betty), and anchors the process with clean unit-test rewards, yielding more faithful intermediate supervision.
+      </td>
+      <td>
+        <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="40%">
+      </td>
+    </tr>
+  </table>
 - **Experimental setup** uses LiveCodeBench (pre-2024-08 training / post-2025-02 test), OpenAI o4-mini-high as the policy, and Qwen-2.5-Coder-3B as the classifier head–based PRM.
 
 | Method | Easy | Medium | Hard | Overall |
