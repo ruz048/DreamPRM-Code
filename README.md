@@ -1,7 +1,4 @@
-# DreamPRM-Code  
-
-- **Process Reward Modeling for Code via Chain-of-Functions and Meta Label Correction**
-
+# DreamPRM-Code: Function-as-Step Process Reward Model with Label Correction for LLM Coding 
 
 [📄 Paper] 
 
@@ -9,14 +6,14 @@
 
 ## 🔍 Overview
 
-DreamPRM-Code is a coding-focused Process Reward Model that enables reliable test-time scaling and RLHF for program synthesis. It resolves the two main blockers for coding PRMs—missing step decompositions and noisy intermediate labels—by scoring reasoning at the **function** level and denoising Monte-Carlo supervision with meta-learning guided by unit-test outcomes. This turns functions into natural PRM steps, aligns with software-engineering abstractions, and keeps inference tractable.
+DreamPRM-Code is a coding-focused Process Reward Model that enables reliable test-time scaling for LLM coding. It resolves the two main blockers for coding PRMs: (1) missing PRM step definitions and (2) noisy intermediate PRM training labels. For 1, it leverages a chain-of-functions prompt to define PRM steps at the **function** level. For 2, it denoises Monte-Carlo sampled PRM training label with meta-learning guided by unit-test outcomes. 
 
 ### Key Mechanics
 
 #### 1. Chain-of-Functions prompting
-DreamPRM-Code steers the policy model to outline high-level strategies, core algorithms, and helper utilities as separate functions so the PRM can judge coherent steps instead of individual lines or natural-language plans.
+Inspired by Chain-of-Thought, DreamPRM-Code uses Chain-of-Function (CoF) prompt to steer the LLM toward producing independent code blocks whose logic can be isolated and encapsulated into separate functions.
 
-<summary><strong>Example CoF prompt</strong></summary>
+<strong>Example of generated code under CoF prompting </strong>
 
 ```python
 (Step-1)
@@ -43,7 +40,7 @@ def build_graph(n, m):
 
 
 #### 2. Meta-learning label correction
-Noisy per-function labels are treated as learnable variables and refined via a bi-level optimizer (Betty) that is anchored by clean unit-test rewards, producing more faithful intermediate supervision.
+Noisy MC-sampled PRM training labels are treated as learnable variables and refined via a meta-learning scheme that is anchored by clean final step rewards, producing more faithful intermediate supervision.
 
 <div align="center">
 <figure>
@@ -52,7 +49,7 @@ Noisy per-function labels are treated as learnable variables and refined via a b
 </div>
 
 #### 3. Experimental setup
-LiveCodeBench (pre-2024-08 training / post-2025-02 test) provides the benchmark split, OpenAI o4-mini-high serves as the policy, and Qwen-2.5-Coder-3B functions as the classifier head–based PRM.
+We use LiveCodeBench (post-2025-02) as the test set, OpenAI o4-mini-high as the base LLM model, and Qwen-2.5-Coder-3B as the PRM.
 
 #### 📊 Benchmark performance
 
@@ -105,7 +102,7 @@ LiveCodeBench (pre-2024-08 training / post-2025-02 test) provides the benchmark 
       <td>79.4</td>
     </tr>
     <tr>
-      <td>PRM (CoF)</td>
+      <td>PRM-CoF (o4-mini-high)</td>
       <td><strong>100</strong></td>
       <td><strong>92.3</strong></td>
       <td>62.3</td>
@@ -127,7 +124,7 @@ LiveCodeBench (pre-2024-08 training / post-2025-02 test) provides the benchmark 
 
 ## 🚀 Quick Start
 
-This section provides a minimal end-to-end guide for running **DreamPRM-Code**, from data generation to training and evaluation.
+This section provides a minimal end-to-end guide for training and evaluating **DreamPRM-Code** on LiveCodeBench.
 
 ---
 
@@ -150,7 +147,7 @@ Use the following script to generate CoF-style code solutions from the base LLM:
 
     bash gen_cof.sh
 
-This step produces **function-structured code traces** that define PRM reasoning steps.  
+This step produces **function-structured code** that define PRM reasoning steps.  
 At this stage, the generated data **does not contain reward labels**.
 
 ---
@@ -165,20 +162,28 @@ These labels serve as the starting point for training and will later be **automa
 
 ---
 
-### 4️⃣ Meta-Learning–Based Training and Evaluation
+### 4️⃣ Generating Multiple LLM Coding Solution
 
-With CoF data and MC-sampled labels prepared, you can start training DreamPRM-Code using the bi-level optimization framework:
+To generate multiple LLM solutions for trained PRM to select from:
+
+    bash gen_sol.sh
+
+It currently uses OpenAI o4-mini-high to generate solutions, which is the same as original LiveCodeBench  settings. 
+
+### 5️⃣ Meta-Learning–Based Training and Evaluation
+
+With CoF data and MC-sampled labels prepared, you can start training DreamPRM-Code under the bi-level optimization framework:
 
     bash run_train_eval.sh
 
 This script:
 - Trains the PRM on function-level steps
 - Performs meta-learning–based label correction
-- Automatically evaluates performance during training
+- Automatically evaluates test-time scaling performance after training if multiple LLM solutions have been generated in previous step
 
 ---
 
-### 5️⃣ Evaluation with a Trained Checkpoint
+### 6️⃣ Evaluation with a Trained Checkpoint
 
 If you already have a trained DreamPRM-Code checkpoint, you can directly run evaluation without retraining:
 
@@ -186,15 +191,21 @@ If you already have a trained DreamPRM-Code checkpoint, you can directly run eva
 
 This evaluates the PRM under test-time scaling settings on the specified benchmark.
 
-Pretrained checkpoint: [DreamPRM-Code (Google Drive)](https://drive.google.com/file/d/1mt4BzB9laiO7yDHVip0TFSVWOEeUBRB1/view?usp=sharing)
+### Pretrained checkpoint
+
+We provide our trained checkpoint of DreamPRM-Code here: [[DreamPRM-Code-ckpt]](https://drive.google.com/file/d/1mt4BzB9laiO7yDHVip0TFSVWOEeUBRB1/view?usp=sharing). Using this checkpoint together with LLM generated solutions, you can directly reproduce our results following instructions in step 6️⃣.
 
 ---
 
-### 📌 Notes
+## Acknowledgement <a name="acknowledgement"></a>
 
-- Ensure the correct base (policy) model and paths are configured in the scripts before running.
-- Generated intermediate labels are intentionally noisy and are refined during meta-learning.
-- Evaluation results are automatically logged for comparison across runs.
++ [LiveCodeBench](https://livecodebench.github.io)
++ [DreamPRM](https://github.com/coder-qicao/DreamPRM)
++ [Betty](https://github.com/leopard-ai/betty)
+
+
+## License <a name="license"></a>
+This repository is under [Apache License 2.0](LICENSE.md).
 
 
 ## 📌 Citation

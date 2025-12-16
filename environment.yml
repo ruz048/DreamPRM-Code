@@ -1,4 +1,4 @@
-name: DreamPRM-Code
+name: dreamprm-code
 channels:
   - defaults
 dependencies:
