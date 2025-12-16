@@ -11,52 +11,117 @@
 
 DreamPRM-Code is a coding-focused Process Reward Model that enables reliable test-time scaling and RLHF for program synthesis. It resolves the two main blockers for coding PRMs—missing step decompositions and noisy intermediate labels—by scoring reasoning at the **function** level and denoising Monte-Carlo supervision with meta-learning guided by unit-test outcomes. This turns functions into natural PRM steps, aligns with software-engineering abstractions, and keeps inference tractable.
 
-Key mechanics:
-- **Chain-of-Functions prompting** steers the policy model to outline high-level strategies, core algorithms, and helpers as separate functions so the PRM can evaluate coherent steps instead of individual lines or natural-language plans.
-- Example prompt:
-  ```
-  (Step-1)
-  def main():
-      '''
-      Strategy: Use Dijkstra's algorithm to find the shortest path...
-      '''
-      # implementation
-  
-  (Step-2)
-  def dijkstra(graph, start, end):
-      '''
-      Implements Dijkstra's algorithm with a min-heap priority queue...
-      '''
-      # implementation
-  
-  (Step-3)
-  def build_graph(n, m):
-      '''
-      Build adjacency list from stdin input...
-      '''
-      # implementation
-  ```
-- <table>
-    <tr>
-      <td width="60%">
-        <strong>Meta-learning label correction</strong> treats noisy per-function labels as learnable variables, updates them with a bi-level optimizer (Betty), and anchors the process with clean unit-test rewards, yielding more faithful intermediate supervision.
-      </td>
-      <td>
-        <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="100%">
-      </td>
-    </tr>
-  </table>
-- **Experimental setup** uses LiveCodeBench (pre-2024-08 training / post-2025-02 test), OpenAI o4-mini-high as the policy, and Qwen-2.5-Coder-3B as the classifier head–based PRM.
+### Key Mechanics
 
-| Method | Easy | Medium | Hard | Overall |
-| --- | --- | --- | --- | --- |
-| Gemini-2.5 | **100** | 82.1 | 52.5 | 72.5 |
-| O3 | **100** | 71.8 | 57.4 | 71.8 |
-| DeepSeek-R1 | 99.7 | 77.7 | 47.2 | 68.7 |
-| O4-mini-high | **100** | 89.7 | 57.4 | 77.1 |
-| ORM (o4-mini-high) | **100** | 89.7 | 62.3 | 79.4 |
-| PRM (CoF) | **100** | **92.3** | 62.3 | 80.2 |
-| **DreamPRM-Code** | **100** | **92.3** | **63.9** | **80.9** |
+#### 1. Chain-of-Functions prompting
+DreamPRM-Code steers the policy model to outline high-level strategies, core algorithms, and helper utilities as separate functions so the PRM can judge coherent steps instead of individual lines or natural-language plans.
+
+<details>
+<summary><strong>Example CoF prompt</strong></summary>
+
+```python
+(Step-1)
+def main():
+    '''
+    Strategy: Use Dijkstra's algorithm to find the shortest path...
+    '''
+    # implementation
+
+(Step-2)
+def dijkstra(graph, start, end):
+    '''
+    Implements Dijkstra's algorithm with a min-heap priority queue...
+    '''
+    # implementation
+
+(Step-3)
+def build_graph(n, m):
+    '''
+    Build adjacency list from stdin input...
+    '''
+    # implementation
+```
+</details>
+
+#### 2. Meta-learning label correction
+Noisy per-function labels are treated as learnable variables and refined via a bi-level optimizer (Betty) that is anchored by clean unit-test rewards, producing more faithful intermediate supervision.
+
+<figure>
+  <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="50%">
+  <figcaption align="center"><sub>Meta-learning denoises Monte-Carlo labels with unit-test anchors.</sub></figcaption>
+</figure>
+
+#### 3. Experimental setup
+LiveCodeBench (pre-2024-08 training / post-2025-02 test) provides the benchmark split, OpenAI o4-mini-high serves as the policy, and Qwen-2.5-Coder-3B functions as the classifier head–based PRM.
+
+#### 📊 Benchmark performance
+
+<div align="center">
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Easy</th>
+      <th>Medium</th>
+      <th>Hard</th>
+      <th>Overall</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Gemini-2.5</td>
+      <td><strong>100</strong></td>
+      <td>82.1</td>
+      <td>52.5</td>
+      <td>72.5</td>
+    </tr>
+    <tr>
+      <td>O3</td>
+      <td><strong>100</strong></td>
+      <td>71.8</td>
+      <td>57.4</td>
+      <td>71.8</td>
+    </tr>
+    <tr>
+      <td>DeepSeek-R1</td>
+      <td>99.7</td>
+      <td>77.7</td>
+      <td>47.2</td>
+      <td>68.7</td>
+    </tr>
+    <tr>
+      <td>O4-mini-high</td>
+      <td><strong>100</strong></td>
+      <td>89.7</td>
+      <td>57.4</td>
+      <td>77.1</td>
+    </tr>
+    <tr>
+      <td>ORM (o4-mini-high)</td>
+      <td><strong>100</strong></td>
+      <td>89.7</td>
+      <td>62.3</td>
+      <td>79.4</td>
+    </tr>
+    <tr>
+      <td>PRM (CoF)</td>
+      <td><strong>100</strong></td>
+      <td><strong>92.3</strong></td>
+      <td>62.3</td>
+      <td>80.2</td>
+    </tr>
+    <tr>
+      <td><strong>DreamPRM-Code</strong></td>
+      <td><strong>100</strong></td>
+      <td><strong>92.3</strong></td>
+      <td><strong>63.9</strong></td>
+      <td><strong>80.9</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
 
 ---
 
