@@ -1,121 +1,142 @@
 # DreamPRM-Code 🚀  
 **Process Reward Modeling for Code via Chain-of-Functions and Meta Label Correction**
 
-[📄 Paper] | [🌐 Project Page](http://github.com/ruz048/DreamPRM-Code)
+![DreamPRM-Code logo](figs/logo.png)
+
+[📄 Paper] 
 
 ---
 
 ## 🔍 Overview
 
-**DreamPRM-Code** is a coding-focused **Process Reward Model (PRM)** designed to enhance Large Language Models (LLMs) for program synthesis under **test-time scaling** and **reinforcement learning from feedback**.
+DreamPRM-Code is a coding-focused Process Reward Model that enables reliable test-time scaling and RLHF for program synthesis. It resolves the two main blockers for coding PRMs—missing step decompositions and noisy intermediate labels—by scoring reasoning at the **function** level and denoising Monte-Carlo supervision with meta-learning guided by unit-test outcomes. This turns functions into natural PRM steps, aligns with software-engineering abstractions, and keeps inference tractable.
 
-Process Reward Models have demonstrated strong effectiveness in mathematical reasoning but remain underexplored for coding tasks due to two key challenges: the absence of natural step decompositions in code and the heavy noise in Monte-Carlo–generated intermediate supervision. DreamPRM-Code addresses both issues by redefining reasoning steps at the level of **functions** and introducing a **meta-learning–based label correction framework**.
-
-When applied to test-time scaling, DreamPRM-Code achieves **state-of-the-art performance on LiveCodeBench**, reaching **80.9 pass@1**, surpassing OpenAI o4-mini and other competitive baselines.
-
----
-
-## ✨ Key Contributions
-
-- **Chain-of-Functions (CoF) Prompting**  
-  Encourages LLMs to generate modular, function-structured programs and defines functions as PRM reasoning steps.
-
-- **Meta-Learning–Based Label Correction**  
-  Automatically denoises noisy intermediate PRM labels by leveraging clean final-step unit-test supervision through bi-level optimization.
-
-- **Strong Empirical Performance**  
-  Achieves new state-of-the-art results on LiveCodeBench under identical base models.
-
----
-
-## 🧩 Motivation
-
-Process Reward Models score partial reasoning states and enable:
-- Scalable alternatives to human feedback in RLHF
-- Test-time scaling via best-of-N selection or tree search
-
-However, unlike mathematical Chain-of-Thought reasoning, code generation lacks a clear notion of “steps.” Naively treating each line as a step leads to excessive computation, while natural-language planning ignores the reasoning embedded in the code itself.
-
-DreamPRM-Code bridges this gap by aligning PRM steps with **software engineering abstractions**, making PRMs practical and effective for coding.
-
----
-
-## 🔗 Chain-of-Functions as PRM Steps
-
-DreamPRM-Code introduces a **Chain-of-Functions (CoF)** prompting strategy that encourages LLMs to generate code as a sequence of well-defined functions.
-
-Under this paradigm:
-- High-level strategy functions are defined first
-- Core algorithms and helper utilities are implemented as separate functions
-- Each function constitutes a coherent reasoning step for PRM evaluation
-
-This design mirrors human programming practices and allows standard PRM training and inference pipelines—previously used in mathematical reasoning—to be directly applied to code generation.
-
----
-
-## 🧠 Meta-Learning–Based Label Correction
-
-PRMs are typically trained using Monte-Carlo–sampled labels for intermediate steps, which are often noisy and unreliable. Coding tasks offer a unique opportunity: **final solutions can be automatically evaluated using unit tests**, yielding clean correctness labels.
-
-DreamPRM-Code exploits this property with a **bi-level meta-learning framework**:
-- Noisy middle-step labels are treated as learnable variables
-- The PRM is trained on these labels in the inner loop
-- Performance on clean final-step unit-test data guides label refinement in the outer loop
-
-Through alternating optimization, intermediate labels are progressively denoised, resulting in more robust PRM training and improved downstream performance.
-
----
-
-## 🧪 Experimental Setup
-
-- **Benchmark**: LiveCodeBench (LeetCode, AtCoder, Codeforces)
-- **Training split**: Problems released before 2024-08-01
-- **Test split**: Problems released after 2025-02-01 (no overlap)
-- **Policy model**: OpenAI o4-mini-high
-- **Reward model**: Qwen-2.5-Coder-3B with a classification head
-- **Optimization**: Bi-level meta-learning implemented with the Betty library
-
----
-
-## 📊 Results on LiveCodeBench
+Key mechanics:
+- **Chain-of-Functions prompting** steers the policy model to outline high-level strategies, core algorithms, and helpers as separate functions so the PRM can evaluate coherent steps instead of individual lines or natural-language plans.
+- Example prompt:
+  ```
+  (Step-1)
+  def main():
+      '''
+      Strategy: Use Dijkstra's algorithm to find the shortest path...
+      '''
+      # implementation
+  
+  (Step-2)
+  def dijkstra(graph, start, end):
+      '''
+      Implements Dijkstra's algorithm with a min-heap priority queue...
+      '''
+      # implementation
+  
+  (Step-3)
+  def build_graph(n, m):
+      '''
+      Build adjacency list from stdin input...
+      '''
+      # implementation
+  ```
+- **Meta-learning label correction** treats noisy per-function labels as learnable variables, updates them with a bi-level optimizer (Betty), and anchors the process with clean unit-test rewards, yielding more faithful intermediate supervision.
+  ![Meta-learning label correction flowchart](figs/flowchart.png)
+- **Experimental setup** uses LiveCodeBench (pre-2024-08 training / post-2025-02 test), OpenAI o4-mini-high as the policy, and Qwen-2.5-Coder-3B as the classifier head–based PRM.
 
 | Method | Easy | Medium | Hard | Overall |
-|------|------|--------|------|---------|
-| o4-mini-high | 100 | 89.7 | 57.4 | 77.1 |
-| ORM Scaling | 100 | 89.7 | 62.3 | 79.4 |
-| PRM (CoF, no correction) | 100 | 92.3 | 62.3 | 80.2 |
+| --- | --- | --- | --- | --- |
+| Gemini-2.5 | **100** | 82.1 | 52.5 | 72.5 |
+| O3 | **100** | 71.8 | 57.4 | 71.8 |
+| DeepSeek-R1 | 99.7 | 77.7 | 47.2 | 68.7 |
+| O4-mini-high | **100** | 89.7 | 57.4 | 77.1 |
+| ORM (o4-mini-high) | **100** | 89.7 | 62.3 | 79.4 |
+| PRM (CoF) | **100** | **92.3** | 62.3 | 80.2 |
 | **DreamPRM-Code** | **100** | **92.3** | **63.9** | **80.9** |
 
-**Key Findings**
-- Function-level PRM steps outperform whole-solution reward modeling
-- Meta label correction consistently improves PRM effectiveness
-- DreamPRM-Code achieves the best overall performance under identical base models
+---
+
+## 🚀 Quick Start
+
+This section provides a minimal end-to-end guide for running **DreamPRM-Code**, from data generation to training and evaluation.
 
 ---
 
-## 🏁 Conclusion
+### 1️⃣ Clone the Repository and Set Up Environment
 
-DreamPRM-Code demonstrates that **Process Reward Models can be effectively adapted to coding tasks** by:
-- Redefining reasoning steps through Chain-of-Functions prompting
-- Leveraging unit-test supervision with meta-learning–based label correction
+First, clone the repository and create the conda environment using the provided `environment.yml` file:
 
-This framework enables robust PRM training and delivers **state-of-the-art test-time scaling performance** on LiveCodeBench.
+    git clone https://github.com/ruz048/DreamPRM-Code.git
+    cd DreamPRM-Code
+    conda env create -f environment.yml
+    conda activate dreamprm-code
 
 ---
+
+### 2️⃣ Generate Chain-of-Functions (CoF) Training Data
+
+DreamPRM-Code relies on **Chain-of-Functions (CoF)**–structured code as PRM training data.
+
+Use the following script to generate CoF-style code solutions from the base LLM:
+
+    bash gen_cof.sh
+
+This step produces **function-structured code traces** that define PRM reasoning steps.  
+At this stage, the generated data **does not contain reward labels**.
+
+---
+
+### 3️⃣ Monte-Carlo Label Generation
+
+To obtain initial supervision for PRM training, we perform **Monte-Carlo (MC) sampling** to assign noisy correctness labels to intermediate CoF steps:
+
+    bash gen_cof_label.sh
+
+These labels serve as the starting point for training and will later be **automatically refined** by the meta-learning–based label correction framework.
+
+---
+
+### 4️⃣ Meta-Learning–Based Training and Evaluation
+
+With CoF data and MC-sampled labels prepared, you can start training DreamPRM-Code using the bi-level optimization framework:
+
+    bash run_train_eval.sh
+
+This script:
+- Trains the PRM on function-level steps
+- Performs meta-learning–based label correction
+- Automatically evaluates performance during training
+
+---
+
+### 5️⃣ Evaluation with a Trained Checkpoint
+
+If you already have a trained DreamPRM-Code checkpoint, you can directly run evaluation without retraining:
+
+    bash run_eval.sh
+
+This evaluates the PRM under test-time scaling settings on the specified benchmark.
+
+Pretrained checkpoint: [DreamPRM-Code (Google Drive)](https://drive.google.com/file/d/1mt4BzB9laiO7yDHVip0TFSVWOEeUBRB1/view?usp=sharing)
+
+---
+
+### 📌 Notes
+
+- Ensure the correct base (policy) model and paths are configured in the scripts before running.
+- Generated intermediate labels are intentionally noisy and are refined during meta-learning.
+- Evaluation results are automatically logged for comparison across runs.
+
 
 ## 📌 Citation
 
 If you find this work useful, please cite:
 
-    @article{dreamprmcode2025,
-      title={DreamPRM-Code: Process Reward Modeling for Code via Chain-of-Functions},
-      author={Zhang, Ruiyi and others},
-      year={2025}
+    @article{zhang2025dreamprmcode,
+    title   = {DreamPRM-Code: Function-as-Step Process Reward Model for LLM Coding},
+    author  = {Zhang, Ruiyi and Qin, Peijia and Cao, Qi and Xie, Pengtao},
+    journal = {arXiv preprint},
+    year    = {2025}
     }
 
 ---
 
 ## 📬 Contact
 
-For questions or collaborations, please open an issue or visit the project page:  
-http://github.com/ruz048/DreamPRM-Code
+For questions or collaborations, please contact ruz048@ucsd.edu 
