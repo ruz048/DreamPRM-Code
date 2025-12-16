@@ -16,7 +16,6 @@ DreamPRM-Code is a coding-focused Process Reward Model that enables reliable tes
 #### 1. Chain-of-Functions prompting
 DreamPRM-Code steers the policy model to outline high-level strategies, core algorithms, and helper utilities as separate functions so the PRM can judge coherent steps instead of individual lines or natural-language plans.
 
-<details>
 <summary><strong>Example CoF prompt</strong></summary>
 
 ```python
@@ -41,15 +40,16 @@ def build_graph(n, m):
     '''
     # implementation
 ```
-</details>
+
 
 #### 2. Meta-learning label correction
 Noisy per-function labels are treated as learnable variables and refined via a bi-level optimizer (Betty) that is anchored by clean unit-test rewards, producing more faithful intermediate supervision.
 
+<div align="center">
 <figure>
-  <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="50%">
-  <figcaption align="center"><sub>Meta-learning denoises Monte-Carlo labels with unit-test anchors.</sub></figcaption>
+  <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="30%">
 </figure>
+</div>
 
 #### 3. Experimental setup
 LiveCodeBench (pre-2024-08 training / post-2025-02 test) provides the benchmark split, OpenAI o4-mini-high serves as the policy, and Qwen-2.5-Coder-3B functions as the classifier head–based PRM.
