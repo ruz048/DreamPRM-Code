@@ -1,7 +1,7 @@
 # DreamPRM-Code 🚀  
 **Process Reward Modeling for Code via Chain-of-Functions and Meta Label Correction**
 
-![DreamPRM-Code logo](figs/logo.png)
+<img src="figs/logo.png" alt="DreamPRM-Code logo" width="10%">
 
 [📄 Paper] 
 
@@ -37,7 +37,7 @@ Key mechanics:
       # implementation
   ```
 - **Meta-learning label correction** treats noisy per-function labels as learnable variables, updates them with a bi-level optimizer (Betty), and anchors the process with clean unit-test rewards, yielding more faithful intermediate supervision.
-  ![Meta-learning label correction flowchart](figs/flowchart.png)
+  <img src="figs/flowchart.png" alt="Meta-learning label correction flowchart" width="50%">
 - **Experimental setup** uses LiveCodeBench (pre-2024-08 training / post-2025-02 test), OpenAI o4-mini-high as the policy, and Qwen-2.5-Coder-3B as the classifier head–based PRM.
 
 | Method | Easy | Medium | Hard | Overall |
