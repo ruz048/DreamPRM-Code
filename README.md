@@ -1,6 +1,6 @@
 # DreamPRM-Code: Function-as-Step Process Reward Model with Label Correction for LLM Coding 
 
-[📄 Paper] 
+[📄 Paper](https://arxiv.org/abs/2512.15000)
 
 ---
 
